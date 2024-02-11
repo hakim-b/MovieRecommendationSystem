@@ -4,6 +4,11 @@
 
 #include "header_files//struct_types.h"
 
+void clearInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
 void printMenu() {
     printf("***** Movie Recommendation System *****\n");
     printf("1. Register User\n");
@@ -100,14 +105,16 @@ int main() {
                 do {
                     printf("Enter username for registration: ");
                     scanf("%s", nameToSearch);
+                    clearInputBuffer();
 
                     if (usernameRegistered(nameToSearch, registeredUsers, numRecords)) {
                         printf("Username already registered.\n");
                     } else {
-                        printf("User %s is successfully registered\n", nameToSearch);
+                        printf("User %s is successfully registered\n\n", nameToSearch);
                         break;
                     }
                 } while (usernameRegistered(nameToSearch, registeredUsers, numRecords));
+
                 break;
             case 2:
                 displayMovies();
