@@ -80,6 +80,7 @@ int main() {
 
         FILE *userFile = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/user_data.txt", "r");
         struct User registeredUsers[100];
+        int lastID;
 
         switch (choice) {
             case 1:
@@ -93,6 +94,7 @@ int main() {
                 while (fscanf(userFile, "%49s %d", registeredUsers[numRecords].username,
                               &registeredUsers[numRecords].id) == 2) {
                     numRecords++;
+                    lastID = registeredUsers[numRecords].id;
 
                     if (numRecords >= 100) {
                         break;
@@ -111,6 +113,10 @@ int main() {
                         printf("Username already registered.\n");
                     } else {
                         printf("User %s is successfully registered\n\n", nameToSearch);
+                        userFile = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/user_data.txt", "a");
+                        char newLine[70];
+                        sprintf(newLine, "\n%s %d\n", nameToSearch, lastID + 1);
+                        fputs(newLine, userFile);
                         break;
                     }
                 } while (usernameRegistered(nameToSearch, registeredUsers, numRecords));
