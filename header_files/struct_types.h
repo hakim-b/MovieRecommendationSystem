@@ -6,13 +6,13 @@
 #define MOVIERECCOMENDATIONSYSTEM_STRUCT_TYPES_H
 
 struct User {
-    char username[100];
+    char username[40];
     int id;
 };
 
 struct Movie {
-    char title[100];
-    char genre[50];
+    char title[50];
+    char genre[20];
     float rating;
 };
 

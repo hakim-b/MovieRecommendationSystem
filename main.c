@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "header_files//struct_types.h"
 
@@ -32,7 +33,8 @@ void displayMovies() {
     struct Movie movies[100];
     int recordCount = 0;
 
-    while (fscanf(file, "%99s %49s %f", movies[recordCount].title, movies[recordCount].genre, &movies[recordCount].rating) == 3) {
+    while (fscanf(file, "%99s %49s %f", movies[recordCount].title, movies[recordCount].genre,
+                  &movies[recordCount].rating) == 3) {
         recordCount++;
 
         if (recordCount >= 100) {
@@ -44,48 +46,80 @@ void displayMovies() {
     fclose(file);
 
     for (int i = 0; i < recordCount; i++) {
-        printf("%s\t %s\t %.1f\n", movies[i].title, movies[i].genre,movies[i].rating);
+        printf("%s\t %s\t %.1f\n", movies[i].title, movies[i].genre, movies[i].rating);
     }
 }
 
+int getChoice() {
+    char input[100];
+    int choice;
+
+    printf("Enter your choice: ");
+    fgets(input, sizeof(input), stdin);
+
+    if (sscanf(input, "%d", &choice) != 1) {
+        printf("Invalid input. Please enter an integer\n");
+        return -1;
+    }
+
+    return choice;
+}
+
+
 int main() {
-    displayMovies();
+    int choice;
 
-//    FILE *file = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/user_data.txt", "r");
-//
-//    if (file == NULL) {
-//        printf("Error opening file\n");
-//        return 1;
-//    }
-//
-//    const int MAX_RECORDS = 100;
-//    struct User registeredUsers[MAX_RECORDS];
-//    int numRecords = 0;
-//
-//    while (fscanf(file, "%49s %d", registeredUsers[numRecords].username, &registeredUsers[numRecords].id) == 2) {
-//        numRecords++;
-//
-//        if (numRecords >= MAX_RECORDS) {
-//            printf("Maximum number of records reached.\n");
-//            break;
-//        }
-//    }
-//
-//    fclose(file);
-//
-//    printf("Read %d records:\n", numRecords);
-//    for (int i = 0; i < numRecords; i++) {
-//        printf("Name: %s, ID: %d\n", registeredUsers[i].username, registeredUsers[i].id);
-//    }
-//
-//    const char *nameToSearch = "kay";
-//    if (usernameRegistered(nameToSearch, registeredUsers, numRecords)) {
-//        printf("Name '%s' already exists in the file.\n", nameToSearch);
-//    } else {
-//        printf("Name '%s' does not exist in the file.\n", nameToSearch);
-//    }
+    do {
+        printMenu();
+        choice = getChoice();
 
-    return 0;
+        FILE *userFile = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/user_data.txt", "r");
+        struct User registeredUsers[100];
+
+        switch (choice) {
+            case 1:
+                if (userFile == NULL) {
+                    printf("Error opening file\n");
+                    return 1;
+                }
+
+                int numRecords = 0;
+
+                while (fscanf(userFile, "%49s %d", registeredUsers[numRecords].username,
+                              &registeredUsers[numRecords].id) == 2) {
+                    numRecords++;
+
+                    if (numRecords >= 100) {
+                        break;
+                    }
+                }
+
+                fclose(userFile);
+
+                char nameToSearch[40];
+                do {
+                    printf("Enter username for registration: ");
+                    scanf("%s", nameToSearch);
+
+                    if (usernameRegistered(nameToSearch, registeredUsers, numRecords)) {
+                        printf("Username already registered.\n");
+                    } else {
+                        printf("User %s is successfully registered\n", nameToSearch);
+                        break;
+                    }
+                } while (usernameRegistered(nameToSearch, registeredUsers, numRecords));
+                break;
+            case 2:
+                displayMovies();
+                break;
+            case 0:
+                printf("Goodbye!\n");
+                exit(0);
+            default:
+                printf("Invalid choice\n");
+                break;
+        }
+    } while (1);
 }
 
 
