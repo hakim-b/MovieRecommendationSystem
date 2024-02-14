@@ -70,34 +70,6 @@ int getChoice() {
     return choice;
 }
 
-void updateUserRatingsFile(const char *username) {
-    FILE *ratingsFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt", "r+");
-    if (ratingsFile == NULL) {
-        printf("Error opening file\n");
-        return;
-    }
-
-    // Determine the number of rows (users) in the ratings matrix
-    int numRows;
-    fscanf(ratingsFile, "%d", &numRows);
-
-    // Move the file pointer to the end of the file
-    fseek(ratingsFile, 0, SEEK_END);
-
-    // Append a new row filled with 0.0s for the new user
-    fprintf(ratingsFile, "\n");
-    for (int i = 0; i < 10; i++) {
-        fprintf(ratingsFile, "0.0 ");
-    }
-
-    // Move the file pointer back to update the number of rows
-    fseek(ratingsFile, 0, SEEK_SET);
-    fprintf(ratingsFile, "%d", numRows + 1);
-
-    fclose(ratingsFile);
-}
-
-
 int main() {
     int choice;
 
@@ -106,6 +78,7 @@ int main() {
         choice = getChoice();
 
         FILE *userFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "r");
+        FILE *ratingsFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt", "r+");
         struct User registeredUsers[100];
 
         switch (choice) {
@@ -147,7 +120,29 @@ int main() {
                         sprintf(newLine, "\n%s %d\n", nameToSearch, lastID);
                         fputs(newLine, userFile);
                         fclose(userFile); // Don't forget to close the file after writing
-                        updateUserRatingsFile(nameToSearch);
+                        if (ratingsFile == NULL) {
+                            printf("Error opening file\n");
+                            return 1;
+                        }
+
+                        // Determine the number of rows (users) in the ratings matrix
+                        int numRows;
+                        fscanf(ratingsFile, "%d", &numRows);
+
+                        // Move the file pointer to the end of the file
+                        fseek(ratingsFile, 0, SEEK_END);
+
+                        // Append a new row filled with 0.0s for the new user
+                        fprintf(ratingsFile, "\n");
+                        for (int i = 0; i < 10; i++) {
+                            fprintf(ratingsFile, "0.0 ");
+                        }
+
+                        // Move the file pointer back to update the number of rows
+                        fseek(ratingsFile, 0, SEEK_SET);
+                        fprintf(ratingsFile, "%d", numRows + 1);
+
+                        fclose(ratingsFile);
                         break;
                     }
                 } while (usernameRegistered(nameToSearch, registeredUsers, numRecords));
