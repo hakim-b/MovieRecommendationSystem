@@ -20,7 +20,7 @@ void printMenu() {
 
 int usernameRegistered(const char *username, struct User *registeredUsers, int recordCount) {
     for (int i = 0; i < recordCount; i++) {
-        if (strcmp(username, registeredUsers[i].username) == 0) {
+        if (strcasecmp(username, registeredUsers[i].username) == 0) {
             return 1;
         }
     }
@@ -29,7 +29,7 @@ int usernameRegistered(const char *username, struct User *registeredUsers, int r
 }
 
 void displayMovies() {
-    FILE *file = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/movie_database.txt", "r");
+    FILE *file = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/movie_database.txt", "r");
 
     if (file == NULL) {
         printf("Error opening file\n");
@@ -70,6 +70,33 @@ int getChoice() {
     return choice;
 }
 
+void updateUserRatingsFile(const char *username) {
+    FILE *ratingsFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt", "r+");
+    if (ratingsFile == NULL) {
+        printf("Error opening file\n");
+        return;
+    }
+
+    // Determine the number of rows (users) in the ratings matrix
+    int numRows;
+    fscanf(ratingsFile, "%d", &numRows);
+
+    // Move the file pointer to the end of the file
+    fseek(ratingsFile, 0, SEEK_END);
+
+    // Append a new row filled with 0.0s for the new user
+    fprintf(ratingsFile, "\n");
+    for (int i = 0; i < 10; i++) {
+        fprintf(ratingsFile, "0.0 ");
+    }
+
+    // Move the file pointer back to update the number of rows
+    fseek(ratingsFile, 0, SEEK_SET);
+    fprintf(ratingsFile, "%d", numRows + 1);
+
+    fclose(ratingsFile);
+}
+
 
 int main() {
     int choice;
@@ -78,9 +105,8 @@ int main() {
         printMenu();
         choice = getChoice();
 
-        FILE *userFile = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/user_data.txt", "r");
+        FILE *userFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "r");
         struct User registeredUsers[100];
-        int lastID;
 
         switch (choice) {
             case 1:
@@ -90,6 +116,7 @@ int main() {
                 }
 
                 int numRecords = 0;
+                int lastID;
 
                 while (fscanf(userFile, "%49s %d", registeredUsers[numRecords].username,
                               &registeredUsers[numRecords].id) == 2) {
@@ -101,6 +128,7 @@ int main() {
                     }
                 }
 
+                lastID = registeredUsers[numRecords - 1].id;
                 fclose(userFile);
 
                 char nameToSearch[40];
@@ -113,10 +141,13 @@ int main() {
                         printf("Username already registered.\n");
                     } else {
                         printf("User %s is successfully registered\n\n", nameToSearch);
-                        userFile = fopen("/home/hakim/CLionProjects/MovieReccomendationSystem/input_files/user_data.txt", "a");
+                        userFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "a");
+                        lastID++;
                         char newLine[70];
-                        sprintf(newLine, "\n%s %d\n", nameToSearch, lastID + 1);
+                        sprintf(newLine, "\n%s %d\n", nameToSearch, lastID);
                         fputs(newLine, userFile);
+                        fclose(userFile); // Don't forget to close the file after writing
+                        updateUserRatingsFile(nameToSearch);
                         break;
                     }
                 } while (usernameRegistered(nameToSearch, registeredUsers, numRecords));
