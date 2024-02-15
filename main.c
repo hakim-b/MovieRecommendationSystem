@@ -51,7 +51,7 @@ void displayMovies() {
     fclose(file);
 
     for (int i = 0; i < recordCount; i++) {
-        printf("%s\t %s\t %.1f\n", movies[i].title, movies[i].genre, movies[i].rating);
+        printf("%d. %s\t %s\t %.1f\n", i + 1, movies[i].title, movies[i].genre, movies[i].rating);
     }
 }
 
@@ -70,6 +70,34 @@ int getChoice() {
     return choice;
 }
 
+int updateUserRating(FILE *file, int userId, int movieId, float newRating) {
+    file = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt", "r+");
+
+    if (file == NULL) {
+        printf("Error opening file\n");
+        return 0; // Return 0 to indicate failure
+    }
+
+    int numRows, numCols;
+    fscanf(file, "%d %d", &numRows, &numCols); // Read the dimensions of the matrix
+
+    // Check if the provided indices are within bounds
+    if (userId < 1 || userId > numRows || movieId < 1 || movieId > numCols) {
+        printf("Invalid user ID or movie ID\n");
+        fclose(file);
+        return 0; // Return 0 to indicate failure
+    }
+
+    // Move the file pointer to the correct position in the file
+    fseek(file, (userId - 1) * numCols * sizeof(float) + (movieId - 1) * sizeof(float), SEEK_SET);
+
+    // Write the new rating to the file
+    fprintf(file, "%.1f ", newRating);
+
+    fclose(file);
+    return 1; // Return 1 to indicate success
+}
+
 int main() {
     int choice;
 
@@ -78,8 +106,13 @@ int main() {
         choice = getChoice();
 
         FILE *userFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "r");
-        FILE *ratingsFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt", "r+");
+        FILE *ratingsFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt",
+                                  "r+");
+
         struct User registeredUsers[100];
+        struct User userForRating;
+        int inputRating;
+        int moviePos;
 
         switch (choice) {
             case 1:
@@ -114,7 +147,8 @@ int main() {
                         printf("Username already registered.\n");
                     } else {
                         printf("User %s is successfully registered\n\n", nameToSearch);
-                        userFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "a");
+                        userFile = fopen(
+                                "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "a");
                         lastID++;
                         char newLine[70];
                         sprintf(newLine, "\n%s %d\n", nameToSearch, lastID);
@@ -151,6 +185,63 @@ int main() {
             case 2:
                 displayMovies();
                 break;
+            case 3:
+                if (userFile == NULL) {
+                    printf("Error opening file\n");
+                    return 1;
+                }
+
+                numRecords = 0;
+
+                while (fscanf(userFile, "%49s %d", registeredUsers[numRecords].username,
+                              &registeredUsers[numRecords].id) == 2) {
+                    numRecords++;
+
+                    if (numRecords >= 100) {
+                        break;
+                    }
+                }
+
+                fclose(userFile);
+                do {
+                    printf("Enter your username: ");
+                    scanf("%s", userForRating.username);
+                    clearInputBuffer();
+
+                    if (!usernameRegistered(userForRating.username, registeredUsers, numRecords)) {
+                        printf("User not found. Please register first.\n\n");
+                        break;
+                    } else {
+                        printf("***** Movie Database *****\n");
+                        displayMovies();
+
+                        do {
+
+                            printf("Enter the number of the movie you want to rate: ");
+                            scanf("%d", &moviePos);
+                            clearInputBuffer();
+                            if (moviePos >= 1 && moviePos <= 10) {
+                                do {
+                                    printf("Enter your rating (1-5): ");
+                                    scanf("%d", &inputRating);
+                                    clearInputBuffer();
+
+                                    if (inputRating < 1 || inputRating > 5) {
+                                        printf("Invalid rating. Please enter a rating between 1 and 5\n");
+                                    } else {
+                                        updateUserRating(ratingsFile, userForRating.id, moviePos, (float) inputRating);
+                                        printf("Rating recorded successfully\n");
+                                    }
+
+                                } while (inputRating < 1 || inputRating > 5);
+                            }
+                        } while (moviePos < 1 || moviePos > 10);
+                    }
+                } while (!usernameRegistered(userForRating.username, registeredUsers,
+                                             numRecords)); // Continue loop until a registered username is entered
+                break;
+            case 4:
+
             case 0:
                 printf("Goodbye!\n");
                 exit(0);
