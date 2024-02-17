@@ -70,24 +70,25 @@ int getChoice() {
     return choice;
 }
 
-int getLineNoFromFile(FILE *file) {
-    char line[100];
-    int lineNumber = 0;
-
+int countLines(const char *filename) {
+    FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        printf("Could not open file\n");
-        return 1;
+        perror("Error opening file");
+        return -1; // Return -1 to indicate an error
     }
 
-    // Read each line of the file
-    while (fgets(line, sizeof(line), file) != NULL) {
-        lineNumber++;
+    int lineCount = 0;
+    int ch;
+
+    // Count lines until EOF is reached
+    while ((ch = fgetc(file)) != EOF) {
+        if (ch == '\n') {
+            lineCount++;
+        }
     }
 
-    // Close the file
     fclose(file);
-
-    return lineNumber;
+    return lineCount + 1; // Add 1 for the last line
 }
 
 int main() {
@@ -255,7 +256,8 @@ int main() {
                                         }
 
 // Move to the correct position in the row
-                                        fseek(ratingsFile, (moviePos - 1) * 4 + (moviePos - 1),
+                                        int offset = (moviePos - 1) * 4 + (moviePos - 1);
+                                        fseek(ratingsFile, offset,
                                               SEEK_CUR); // Move the file pointer to the correct position in the row
                                         float rating;
                                         fscanf(ratingsFile, "%f", &rating);
@@ -272,7 +274,7 @@ int main() {
                             }
                         } while (moviePos < 1 || moviePos > 10);
                     }
-                } while (userIndex == -1);
+                } while (0);
                 break;
             case 4:
 
