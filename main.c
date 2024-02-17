@@ -4,6 +4,10 @@
 
 #include "header_files//struct_types.h"
 
+#define userFilename "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt"
+#define movieDatabase "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/movie_database.txt"
+#define ratingsMatrixFile "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt"
+
 void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
