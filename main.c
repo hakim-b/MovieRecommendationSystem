@@ -33,7 +33,7 @@ int usernameRegistered(const char *username, struct User *registeredUsers, int r
 }
 
 void displayMovies() {
-    FILE *file = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/movie_database.txt", "r");
+    FILE *file = fopen(movieDatabase, "r");
 
     if (file == NULL) {
         printf("Error opening file\n");
@@ -74,25 +74,46 @@ int getChoice() {
     return choice;
 }
 
-int countLines(const char *filename) {
-    FILE *file = fopen(filename, "r");
+void updateMatrixEntry(const char *filename, int row, int col, float newValue) {
+    FILE *file = fopen(filename, "r+");
     if (file == NULL) {
-        perror("Error opening file");
-        return -1; // Return -1 to indicate an error
+        printf("Error opening file!\n");
+        return;
     }
 
-    int lineCount = 0;
-    int ch;
+    int numRows, numCols;
+    fscanf(file, "%d %d", &numRows, &numCols);
 
-    // Count lines until EOF is reached
-    while ((ch = fgetc(file)) != EOF) {
-        if (ch == '\n') {
-            lineCount++;
+    // Check if row and col are valid
+    if (row < 0 || row >= numRows || col < 0 || col >= numCols) {
+        printf("Invalid row or column index!: %d, %d\n", row, col);
+        fclose(file);
+        return;
+    }
+
+    float matrix[numRows][numCols];
+
+    // Read matrix entries
+    for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j < numCols; j++) {
+            fscanf(file, "%f", &matrix[i][j]);
         }
     }
 
+    // Update specified entry
+    matrix[row][col] = newValue;
+
+    // Rewind file to beginning and overwrite contents
+    rewind(file);
+    fprintf(file, "%d %d\n", numRows, numCols);
+    for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j < numCols; j++) {
+            fprintf(file, "%.1f ", matrix[i][j]);
+        }
+        fprintf(file, "\n");
+    }
+
     fclose(file);
-    return lineCount + 1; // Add 1 for the last line
 }
 
 int main() {
@@ -103,13 +124,14 @@ int main() {
         choice = getChoice();
 
         FILE *userFile = fopen(userFilename, "r");
-        FILE *ratingsFile = fopen(ratingsMatrixFile,
-                                  "r+");
+        FILE *ratingsFile = fopen(ratingsMatrixFile, "r+");
+        FILE *movieFile = fopen(movieDatabase, "r");
 
         struct User registeredUsers[100];
+        struct Movie movies[100];
         char usernameForRating[40];
         int inputRating;
-        int moviePos;
+        int movieNo;
 
         switch (choice) {
             case 1:
@@ -144,8 +166,7 @@ int main() {
                         printf("Username already registered.\n");
                     } else {
                         printf("User %s is successfully registered\n\n", nameToSearch);
-                        userFile = fopen(
-                                "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "a");
+                        userFile = fopen(userFilename, "a");
                         lastID++;
                         char newLine[70];
                         sprintf(newLine, "\n%s %d\n", nameToSearch, lastID);
@@ -188,11 +209,11 @@ int main() {
                     return 1;
                 }
 
-                numRecords = 0;
+                int userRecordCount = 0;
 
-                while (fscanf(userFile, "%49s %d", registeredUsers[numRecords].username,
-                              &registeredUsers[numRecords].id) == 2) {
-                    numRecords++;
+                while (fscanf(userFile, "%49s %d", registeredUsers[userRecordCount].username,
+                              &registeredUsers[userRecordCount].id) == 2) {
+                    userRecordCount++;
 
                     if (numRecords >= 100) {
                         break;
@@ -201,21 +222,40 @@ int main() {
 
                 fclose(userFile);
 
-                int userIndex = -1; // Define userIndex outside the loop
+                if (movieFile == NULL) {
+                    printf("Error opening file\n");
+                    return 1;
+                }
+
+                int movieRecordCount = 0;
+
+                while (fscanf(movieFile, "%99s %49s %f", movies[movieRecordCount].title, movies[movieRecordCount].genre,
+                              &movies[movieRecordCount].rating) == 3) {
+                    movieRecordCount++;
+
+                    if (movieRecordCount >= 100) {
+                        printf("Maximum number of records\n");
+                        break;
+                    }
+                }
+
+                fclose(movieFile);
+
+                int userIndex;
 
                 do {
                     printf("Enter your username: ");
                     scanf("%s", usernameForRating);
                     clearInputBuffer();
 
-                    for (int i = 0; i < numRecords; i++) {
+                    for (int i = 0; i < userRecordCount; i++) {
                         if (strcasecmp(usernameForRating, registeredUsers[i].username) == 0) {
-                            userIndex = i;
+                            userIndex = registeredUsers[i].id - 1;
                             break;
                         }
                     }
 
-                    if (userIndex == -1) {
+                    if (!usernameRegistered(usernameForRating, registeredUsers, userRecordCount)) {
                         printf("User not found. Please register first.\n\n");
                         break;
                     } else {
@@ -224,9 +264,9 @@ int main() {
 
                         do {
                             printf("Enter the number of the movie you want to rate: ");
-                            scanf("%d", &moviePos);
+                            scanf("%d", &movieNo);
                             clearInputBuffer();
-                            if (moviePos >= 1 && moviePos <= 10) {
+                            if (movieNo >= 1 && movieNo <= movieRecordCount) {
                                 do {
                                     printf("Enter your rating (1-5): ");
                                     scanf("%d", &inputRating);
@@ -235,50 +275,16 @@ int main() {
                                     if (inputRating < 1 || inputRating > 5) {
                                         printf("Invalid rating. Please enter a rating between 1 and 5\n");
                                     } else {
-                                        // Update the rating in the matrix
-                                        ratingsFile = fopen(
-                                                "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt",
-                                                "r+");
-                                        if (ratingsFile == NULL) {
-                                            printf("Error opening file\n");
-                                            return 1;
-                                        }
-
-                                        int numRows;
-                                        fscanf(ratingsFile, "%d", &numRows);
-
-// Move the file pointer to the beginning of the ratings data
-                                        fseek(ratingsFile, 0, SEEK_SET);
-
-// Skip the first line containing the number of rows
-                                        char buffer[100];
-                                        fgets(buffer, sizeof(buffer), ratingsFile);
-
-// Move to the correct row
-                                        for (int i = 0; i < userIndex; i++) {
-                                            fgets(buffer, sizeof(buffer), ratingsFile);
-                                        }
-
-// Move to the correct position in the row
-                                        int offset = (moviePos - 1) * 4 + (moviePos - 1);
-                                        fseek(ratingsFile, offset,
-                                              SEEK_CUR); // Move the file pointer to the correct position in the row
-                                        float rating;
-                                        fscanf(ratingsFile, "%f", &rating);
-                                        fseek(ratingsFile, -4,
-                                              SEEK_CUR); // Move the file pointer four positions back to overwrite the space after the rating
-                                        fprintf(ratingsFile, " %.1f",
-                                                (float) inputRating); // Write the new rating without space before it
-
-                                        fclose(ratingsFile);
-
+                                        updateMatrixEntry(ratingsMatrixFile, userIndex, movieNo - 1,
+                                                          (float) inputRating);
+                                        printf("%d\n", userIndex);
                                         printf("Rating recorded successfully\n\n");
                                     }
                                 } while (inputRating < 1 || inputRating > 5);
                             }
-                        } while (moviePos < 1 || moviePos > 10);
+                        } while (movieNo < 1 || movieNo > movieRecordCount);
                     }
-                } while (0);
+                } while (!usernameRegistered(usernameForRating, registeredUsers, userRecordCount));
                 break;
             case 4:
 
