@@ -102,8 +102,8 @@ int main() {
         printMenu();
         choice = getChoice();
 
-        FILE *userFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt", "r");
-        FILE *ratingsFile = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt",
+        FILE *userFile = fopen(userFilename, "r");
+        FILE *ratingsFile = fopen(ratingsMatrixFile,
                                   "r+");
 
         struct User registeredUsers[100];
