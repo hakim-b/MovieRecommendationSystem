@@ -70,32 +70,24 @@ int getChoice() {
     return choice;
 }
 
-int updateUserRating(FILE *file, int userId, int movieId, float newRating) {
-    file = fopen("/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt", "r+");
+int getLineNoFromFile(FILE *file) {
+    char line[100];
+    int lineNumber = 0;
 
     if (file == NULL) {
-        printf("Error opening file\n");
-        return 0; // Return 0 to indicate failure
+        printf("Could not open file\n");
+        return 1;
     }
 
-    int numRows, numCols;
-    fscanf(file, "%d %d", &numRows, &numCols); // Read the dimensions of the matrix
-
-    // Check if the provided indices are within bounds
-    if (userId < 1 || userId > numRows || movieId < 1 || movieId > numCols) {
-        printf("Invalid user ID or movie ID\n");
-        fclose(file);
-        return 0; // Return 0 to indicate failure
+    // Read each line of the file
+    while (fgets(line, sizeof(line), file) != NULL) {
+        lineNumber++;
     }
 
-    // Move the file pointer to the correct position in the file
-    fseek(file, (userId - 1) * numCols * sizeof(float) + (movieId - 1) * sizeof(float), SEEK_SET);
-
-    // Write the new rating to the file
-    fprintf(file, "%.1f ", newRating);
-
+    // Close the file
     fclose(file);
-    return 1; // Return 1 to indicate success
+
+    return lineNumber;
 }
 
 int main() {
@@ -110,7 +102,7 @@ int main() {
                                   "r+");
 
         struct User registeredUsers[100];
-        struct User userForRating;
+        char usernameForRating[40];
         int inputRating;
         int moviePos;
 
@@ -203,12 +195,22 @@ int main() {
                 }
 
                 fclose(userFile);
+
+                int userIndex = -1; // Define userIndex outside the loop
+
                 do {
                     printf("Enter your username: ");
-                    scanf("%s", userForRating.username);
+                    scanf("%s", usernameForRating);
                     clearInputBuffer();
 
-                    if (!usernameRegistered(userForRating.username, registeredUsers, numRecords)) {
+                    for (int i = 0; i < numRecords; i++) {
+                        if (strcasecmp(usernameForRating, registeredUsers[i].username) == 0) {
+                            userIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (userIndex == -1) {
                         printf("User not found. Please register first.\n\n");
                         break;
                     } else {
@@ -216,7 +218,6 @@ int main() {
                         displayMovies();
 
                         do {
-
                             printf("Enter the number of the movie you want to rate: ");
                             scanf("%d", &moviePos);
                             clearInputBuffer();
@@ -229,16 +230,49 @@ int main() {
                                     if (inputRating < 1 || inputRating > 5) {
                                         printf("Invalid rating. Please enter a rating between 1 and 5\n");
                                     } else {
-                                        updateUserRating(ratingsFile, userForRating.id, moviePos, (float) inputRating);
-                                        printf("Rating recorded successfully\n");
-                                    }
+                                        // Update the rating in the matrix
+                                        ratingsFile = fopen(
+                                                "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt",
+                                                "r+");
+                                        if (ratingsFile == NULL) {
+                                            printf("Error opening file\n");
+                                            return 1;
+                                        }
 
+                                        int numRows;
+                                        fscanf(ratingsFile, "%d", &numRows);
+
+// Move the file pointer to the beginning of the ratings data
+                                        fseek(ratingsFile, 0, SEEK_SET);
+
+// Skip the first line containing the number of rows
+                                        char buffer[100];
+                                        fgets(buffer, sizeof(buffer), ratingsFile);
+
+// Move to the correct row
+                                        for (int i = 0; i < userIndex; i++) {
+                                            fgets(buffer, sizeof(buffer), ratingsFile);
+                                        }
+
+// Move to the correct position in the row
+                                        fseek(ratingsFile, (moviePos - 1) * 4 + (moviePos - 1),
+                                              SEEK_CUR); // Move the file pointer to the correct position in the row
+                                        float rating;
+                                        fscanf(ratingsFile, "%f", &rating);
+                                        fseek(ratingsFile, -4,
+                                              SEEK_CUR); // Move the file pointer four positions back to overwrite the space after the rating
+                                        fprintf(ratingsFile, " %.1f",
+                                                (float) inputRating); // Write the new rating without space before it
+
+                                        fclose(ratingsFile);
+
+                                        printf("Rating recorded successfully\n\n");
+                                    }
                                 } while (inputRating < 1 || inputRating > 5);
                             }
                         } while (moviePos < 1 || moviePos > 10);
                     }
-                } while (!usernameRegistered(userForRating.username, registeredUsers,
-                                             numRecords)); // Continue loop until a registered username is entered
+                } while (userIndex == -1);
                 break;
             case 4:
 
