@@ -172,7 +172,7 @@ int main() {
 
         struct User registeredUsers[100];
         struct Movie movies[100];
-        char usernameForRating[40], usernameForRec;
+        char usernameForRating[40], usernameForRec[40];
         int inputRating;
         int movieNo;
 
@@ -369,17 +369,17 @@ int main() {
                 int targetUserIndex;
                 do {
                     printf("Enter your username: ");
-                    scanf("%s", &usernameForRec);
+                    scanf("%s", usernameForRec);
                     clearInputBuffer();
 
                     for (int i = 0; i < userRecordCount; i++) {
-                        if (strcasecmp(&usernameForRec, registeredUsers[i].username) == 0) {
-                            targetUserIndex = i;
+                        if (strcasecmp(usernameForRec, registeredUsers[i].username) == 0) {
+                            targetUserIndex = registeredUsers[i].id - 1;
                             break;
                         }
                     }
 
-                    if (!usernameRegistered(&usernameForRec, registeredUsers, userRecordCount)) {
+                    if (!usernameRegistered(usernameForRec, registeredUsers, userRecordCount)) {
                         printf("User not found. Please register first.\n\n");
                         break;
                     } else {
@@ -435,8 +435,7 @@ int main() {
 
                         freeMatrix(matrix, userRecordCount);
                     }
-                    break;
-                } while (0);
+                } while (!usernameRegistered(usernameForRec, registeredUsers, userRecordCount));
                 break;
             case 0:
                 printf("Goodbye!\n");
@@ -447,5 +446,3 @@ int main() {
         }
     } while (1);
 }
-
-
