@@ -143,7 +143,7 @@ float **readMatrixFromFile(const char *filename, int *rows, int *cols) {
     // Read matrix elements from the file
     for (int i = 0; i < *rows; i++) {
         for (int j = 0; j < *cols; j++) {
-            fscanf(file, "%1f", &matrix[i][j]);
+            fscanf(file, "%f", &matrix[i][j]);
         }
     }
 
@@ -334,11 +334,13 @@ int main() {
                     return 1;
                 }
 
-                while (fscanf(userFile, "%49s %d", registeredUsers[userRecordCount].username,
-                              &registeredUsers[userRecordCount].id) == 2) {
-                    userRecordCount++;
+                int userCount = 0;
 
-                    if (userRecordCount >= 100) {
+                while (fscanf(userFile, "%49s %d", registeredUsers[userCount].username,
+                              &registeredUsers[userCount].id) == 2) {
+                    userCount++;
+
+                    if (userCount >= 100) {
                         break;
                     }
                 }
@@ -351,13 +353,13 @@ int main() {
                     return 1;
                 }
 
-                movieRecordCount = 0;
+                int movieCount = 0;
 
-                while (fscanf(movieFile, "%99s %49s %f", movies[movieRecordCount].title, movies[movieRecordCount].genre,
-                              &movies[movieRecordCount].rating) == 3) {
-                    movieRecordCount++;
+                while (fscanf(movieFile, "%99s %49s %f", movies[movieCount].title, movies[movieCount].genre,
+                              &movies[movieCount].rating) == 3) {
+                    movieCount++;
 
-                    if (movieRecordCount >= 100) {
+                    if (movieCount >= 100) {
                         printf("Maximum number of records\n");
                         break;
                     }
@@ -367,38 +369,47 @@ int main() {
 
                 // Get the target user's index
                 int targetUserIndex;
+
                 do {
                     printf("Enter your username: ");
                     scanf("%s", usernameForRec);
                     clearInputBuffer();
 
-                    for (int i = 0; i < userRecordCount; i++) {
+                    for (int i = 0; i < userCount; i++) {
                         if (strcasecmp(usernameForRec, registeredUsers[i].username) == 0) {
                             targetUserIndex = registeredUsers[i].id - 1;
                             break;
                         }
                     }
 
-                    if (!usernameRegistered(usernameForRec, registeredUsers, userRecordCount)) {
+                    if (!usernameRegistered(usernameForRec, registeredUsers, userCount)) {
                         printf("User not found. Please register first.\n\n");
                         break;
                     } else {
                         printf("\n***** Recommended Movies *****\n");
-                        float** matrix = readMatrixFromFile(ratingsMatrixFile, &userRecordCount, &movieRecordCount);
+                        float **matrix = readMatrixFromFile(ratingsMatrixFile, &userCount, &movieCount);
+
+//                        for (int i = 0; i < userCount; i++) {
+//                            for (int j = 0; j < movieCount; ++j) {
+//                                printf("%.1f\t", matrix[i][j]);
+//                            }
+//                            printf("\n");
+//                        }
 
                         // Array to store the average ratings of unrated movies
-                        float avgRatings[movieRecordCount];
+                        float avgRatings[movieCount];
                         memset(&avgRatings, 0, sizeof(avgRatings));
 
                         // Iterate over each unrated movie and calculate its average rating
-                        for (int j = 0; j < movieRecordCount; j++) {
+                        for (int j = 0; j < movieCount; j++) {
                             if (matrix[targetUserIndex][j] == 0.0) { // If the target user has not rated this movie
                                 int numRatings = 0;
-                                float totalRating = (float ) 0.0;
+                                float totalRating = (float) 0.0;
 
                                 // Iterate over all users to calculate the average rating for this movie
-                                for (int i = 0; i < userRecordCount; i++) {
-                                    if (i != targetUserIndex && matrix[i][j] != 0.0) { // Exclude the target user's rating
+                                for (int i = 0; i < userCount; i++) {
+                                    if (i != targetUserIndex &&
+                                        matrix[i][j] != 0.0) { // Exclude the target user's rating
                                         totalRating += matrix[i][j];
                                         numRatings++;
                                     }
@@ -413,8 +424,8 @@ int main() {
 
                         // Sort the movies based on their average ratings
                         // We'll use a simple bubble sort for demonstration purposes
-                        for (int i = 0; i < movieRecordCount - 1; i++) {
-                            for (int j = 0; j < movieRecordCount - i - 1; j++) {
+                        for (int i = 0; i < movieCount - 1; i++) {
+                            for (int j = 0; j < movieCount - i - 1; j++) {
                                 if (avgRatings[j] < avgRatings[j + 1]) {
                                     // Swap average ratings
                                     float tempRating = avgRatings[j];
@@ -430,12 +441,15 @@ int main() {
                         }
 
                         for (int i = 0; i < 5; i++) {
-                            printf("%d. %s (%s) - Predicted Rating: %.1f\n", i + 1, movies[i].title, movies[i].genre, avgRatings[i]);
+                            if (avgRatings[i] != 0) {
+                                printf("%d. %s (%s) - Predicted Rating: %.1f\n", i + 1, movies[i].title,
+                                       movies[i].genre, avgRatings[i]);
+                            }
                         }
 
-                        freeMatrix(matrix, userRecordCount);
+                        freeMatrix(matrix, userCount);
                     }
-                } while (!usernameRegistered(usernameForRec, registeredUsers, userRecordCount));
+                } while (!usernameRegistered(usernameForRec, registeredUsers, userCount));
                 break;
             case 0:
                 printf("Goodbye!\n");
