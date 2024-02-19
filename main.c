@@ -8,11 +8,19 @@
 #define movieDatabase "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/movie_database.txt"
 #define ratingsMatrixFile "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt"
 
+/**
+ * @brief Clears the input buffer by reading characters until a newline or end-of-file is encountered.
+ *
+ * This function is used to clear the input buffer after prompting the user for input. It reads characters from stdin until a newline or end-of-file is encountered, then discards the characters.
+ */
 void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+/**
+ * @brief Prints the main menu of the movie recommendation system.
+ */
 void printMenu() {
     printf("***** Movie Recommendation System *****\n");
     printf("1. Register User\n");
@@ -22,6 +30,13 @@ void printMenu() {
     printf("0. Exit\n");
 }
 
+/**
+ * @brief checks if the username is registered in the text file
+ * @param username the input username
+ * @param registeredUsers the array of registered users
+ * @param recordCount the number of records in the text file
+ * @return true if the username is registered
+ */
 int usernameRegistered(const char *username, struct User *registeredUsers, int recordCount) {
     for (int i = 0; i < recordCount; i++) {
         if (strcasecmp(username, registeredUsers[i].username) == 0) {
@@ -32,6 +47,11 @@ int usernameRegistered(const char *username, struct User *registeredUsers, int r
     return 0;
 }
 
+/**
+ * @brief Displays the list of movies in the system.
+ *
+ * This function reads the list of movies from a file and prints the titles, genres, and ratings of each movie.
+ */
 void displayMovies() {
     FILE *file = fopen(movieDatabase, "r");
 
@@ -59,6 +79,11 @@ void displayMovies() {
     }
 }
 
+/**
+ * @brief Reads input from the user and returns their choice.
+ *
+ * @return The user's choice as an integer.
+ */
 int getChoice() {
     char input[100];
     int choice;
@@ -74,6 +99,14 @@ int getChoice() {
     return choice;
 }
 
+/**
+ * @brief Updates an entry in the ratings matrix.
+ *
+ * @param filename The filename of the ratings matrix file.
+ * @param row The row index of the entry to update.
+ * @param col The column index of the entry to update.
+ * @param newValue The new value to set for the entry.
+ */
 void updateMatrixEntry(const char *filename, int row, int col, float newValue) {
     FILE *file = fopen(filename, "r+");
     if (file == NULL) {
@@ -116,6 +149,14 @@ void updateMatrixEntry(const char *filename, int row, int col, float newValue) {
     fclose(file);
 }
 
+/**
+ * @brief Reads a ratings matrix from a file.
+ *
+ * @param filename The filename of the ratings matrix file.
+ * @param rows A pointer to an integer to store the number of rows in the matrix.
+ * @param cols A pointer to an integer to store the number of columns in the matrix.
+ * @return A pointer to the float matrix, where each element represents a rating.
+ */
 float **readMatrixFromFile(const char *filename, int *rows, int *cols) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -151,7 +192,12 @@ float **readMatrixFromFile(const char *filename, int *rows, int *cols) {
     return matrix;
 }
 
-// Function to free memory allocated for the matrix
+/**
+ * @brief Frees the memory allocated for a ratings matrix.
+ *
+ * @param matrix The pointer to the matrix to free.
+ * @param rows The number of rows in the matrix.
+ */
 void freeMatrix(float **matrix, int rows) {
     for (int i = 0; i < rows; i++) {
         free(matrix[i]);
