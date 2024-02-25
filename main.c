@@ -4,9 +4,9 @@
 
 #include "header_files//struct_types.h"
 
-#define userFilename "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_data.txt"
-#define movieDatabase "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/movie_database.txt"
-#define ratingsMatrixFile "/home/hakim/CLionProjects/MovieRecommendationSystem/input_files/user_ratings.txt"
+#define userFilename "/home/hakim/Documents/C++Projects/MovieRecommendationSystem/input_files/user_data.txt"
+#define movieDatabase "/home/hakim/Documents/C++Projects/MovieRecommendationSystem/input_files/movie_database.txt"
+#define ratingsMatrixFile "/home/hakim/Documents/C++Projects/MovieRecommendationSystem/input_files/user_ratings.txt"
 
 /**
  * @brief Clears the input buffer by reading characters until a newline or end-of-file is encountered.
